@@ -4,7 +4,7 @@ import express from "express";
 const commentRouter = express.Router();
 
 // Get comments by postid
-likeRouter.get("/:id", async (req, res) => {
+commentRouter.get("/:id", async (req, res) => {
   const { id } = req.params;
   let { page } = req.query;
 
