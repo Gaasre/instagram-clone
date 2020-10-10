@@ -2,6 +2,7 @@ import User from "./user";
 import Userfollow from "./userfollow";
 import Photo from "./photo";
 import Post from "./post";
+import PhotoPost from "./photopost";
 import Like from "./like";
 import Comment from "./comment";
 import Sequelize from "sequelize";
@@ -18,6 +19,7 @@ const sequelize = new Sequelize(
     host: process.env.HOST,
     dialect: "mysql",
     operatorsAliases: false,
+    logging: false,
     pool: {
       max: 5,
       min: 0,
@@ -39,6 +41,7 @@ Models.Like = Like(sequelize, Sequelize.DataTypes);
 Models.Photo = Photo(sequelize, Sequelize.DataTypes);
 Models.Post = Post(sequelize, Sequelize.DataTypes);
 Models.Userfollow = Userfollow(sequelize, Sequelize.DataTypes);
+Models.PhotoPost = PhotoPost(sequelize, Sequelize.DataTypes);
 
 Models.User.hasMany(Models.Post, { as: "posts" });
 Models.User.hasMany(Models.Userfollow, {
@@ -49,7 +52,7 @@ Models.User.hasMany(Models.Userfollow, {
   foreignKey: "user2Id",
   as: "followers",
 });
-Models.User.hasOne(Models.Photo, { as: "photo" });
+Models.User.hasOne(Models.Photo, { as: "photo", foreignKey: "photoId" });
 
 Models.Comment.belongsTo(Models.User, { foreignKey: "userId", as: "user" });
 Models.Comment.belongsTo(Models.Post, { foreignKey: "postId", as: "post" });
@@ -60,6 +63,10 @@ Models.Like.belongsTo(Models.Post, { foreignKey: "postId", as: "post" });
 Models.Post.belongsTo(Models.User, { foreignKey: "userId", as: "user" });
 Models.Post.hasMany(Models.Comment, { as: "comments" });
 Models.Post.hasMany(Models.Like, { as: "likes" });
+Models.Post.hasMany(Models.PhotoPost, { as: "photos", foreignKey: 'postId' });
+
+Models.PhotoPost.belongsTo(Models.Photo, { foreignKey: "photoId", as: "photo" });
+Models.PhotoPost.belongsTo(Models.Post, { foreignKey: "postId", as: "post" });
 
 export default db;
 

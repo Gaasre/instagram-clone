@@ -1,5 +1,7 @@
 import { Models } from "../../models";
 import express from "express";
+import uploadFile from "../../middlewares/upload";
+import { Model } from "mongoose";
 
 const postRouter = express.Router();
 
@@ -35,15 +37,31 @@ postRouter.get("/:id", async (req, res) => {
 });
 
 // New post
-postRouter.post("/", async (req, res) => {
+postRouter.post("/", uploadFile, async (req, res) => {
   const { description, longitude, latitude } = req.body;
-
+  // Create the post first to get its id
   const post = await Models.Post.create({
     userId: req.user.id,
     description,
     longitude,
     latitude,
   });
+  // Check for files in the request
+  const files = req.files;
+  await Promise.all(
+    files.map(async (file) => {
+      // store in photo table
+      const folder = file.destination.split("/")[2];
+      const photo = await Models.Photo.create({
+        path: `${folder}/${file.filename}`,
+      });
+      // store in photopost table
+      const photopost = await Models.PhotoPost.create({
+        photoId: photo.id,
+        postId: post.id,
+      });
+    })
+  );
   res.json(post);
 });
 

@@ -17,6 +17,7 @@ likeRouter.get("/:id", async (req, res) => {
 // New like
 likeRouter.post("/", async (req, res) => {
   const { postId } = req.body;
+  console.log(postId);
   // We check first if the like doesn't exist
   const existingLike = await Models.Like.findOne({
     where: {
@@ -26,17 +27,15 @@ likeRouter.post("/", async (req, res) => {
   });
 
   if (!existingLike) {
-    const post = await Models.Post.findOne({ id: postId });
+    const post = await Models.Post.findByPk(postId);
     if (post) {
       const like = await Models.Like.create({
         userId: req.user.id,
         postId: postId,
       });
 
-      await Models.Post.update(
-        { likeCount: post.likeCount + 1 },
-        { where: { id: postId } }
-      );
+      post.likeCount += 1;
+      const saved = await post.save();
 
       return res.json(like);
     }
@@ -49,24 +48,21 @@ likeRouter.post("/", async (req, res) => {
 likeRouter.delete("/:postId", async (req, res) => {
   const { postId } = req.params;
 
-  const like = await Models.Like.findOne({ where: { postId: postId } });
+  const like = await Models.Like.findOne({
+    where: { postId: postId, userId: req.user.id },
+  });
   if (like) {
-    if (like.userId === req.user.id) {
-      await Models.Like.destroy({
-        where: {
-          postId: postId,
-          userId: req.user.id,
-        },
-      });
-      // decrease count
-      const post = await Models.Post.findOne({ id: postId });
-      await Models.Post.update(
-        { likeCount: post.likeCount - 1 },
-        { where: { id: postId } }
-      );
-      return res.status(200).send("Success.");
-    }
-    return res.status(400).send("Bad request.");
+    await Models.Like.destroy({
+      where: {
+        postId: postId,
+        userId: req.user.id,
+      },
+    });
+    // decrease count
+    const post = await Models.Post.findByPk(postId);
+    post.likeCount = post.likeCount - 1;
+    const saved = await post.save();
+    return res.status(200).send("Success.");
   }
   res.status(404).send(`Like not found on post ${postId}.`);
 });

@@ -13,10 +13,9 @@ commentRouter.post("/", async (req, res) => {
     content: content,
   });
   const post = await Models.Post.findByPk(postId);
-  await Models.Post.update(
-    { commentCount: post.commentCount + 1 },
-    { where: { id: postId } }
-  );
+
+  post.commentCount += 1;
+  const saved = await post.save();
 
   res.json(comment);
 });
@@ -55,10 +54,8 @@ commentRouter.delete("/:id", async (req, res) => {
       });
       // decrease count
       const post = await Models.Post.findByPk(comment.postId);
-      await Models.Post.update(
-        { commentCount: post.commentCount - 1 },
-        { where: { id: comment.postId } }
-      );
+      post.likeCount = post.commentCount - 1;
+      const saved = await post.save();
       return res.status(200).send("Success.");
     }
     return res.status(400).send("Bad request.");

@@ -35,7 +35,7 @@ feedRouter.get("/", async (req, res) => {
             as: "comments",
             limit: 5,
             order: [["createdAt", "DESC"]],
-            attributes: ["id", "content", "createdAt"],
+            attributes: ["id", "content", "userId", "createdAt"],
             include: {
               model: Models.User,
               as: "user",
@@ -43,10 +43,20 @@ feedRouter.get("/", async (req, res) => {
             },
           },
           {
+            model: Models.PhotoPost,
+            as: "photos",
+            attributes: ["id"],
+            include: {
+              model: Models.Photo,
+              as: "photo",
+              attributes: ["path"],
+            },
+          },
+          {
             model: Models.Like,
             as: "likes",
             limit: 5,
-            attributes: ["id", "createdAt"],
+            attributes: ["id", "createdAt", "userId"],
             include: {
               model: Models.User,
               as: "user",
