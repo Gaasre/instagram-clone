@@ -3,6 +3,47 @@ import express from "express";
 
 const commentRouter = express.Router();
 
+// Get comments by postid
+likeRouter.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  let { page } = req.query;
+
+  if (!page) {
+    page = 0;
+  }
+
+  const post = await Models.Post.findByPk(id, {
+    include: [
+      {
+        model: Models.Comment,
+        as: "comments",
+        limit: 20,
+        offset: page * 20,
+        attributes: ["id", "content", "createdAt"],
+        include: {
+          model: Models.User,
+          as: "user",
+          attributes: ["id", "username"],
+        },
+      },
+    ],
+  });
+
+  if (post) {
+    const countComments = await Models.Comment.count({ where: { postId: id } });
+
+    let comments = {
+      per_page: 20,
+      page: page,
+      total_pages: Math.ceil(countComments / 20),
+      data: post.comments,
+    };
+
+    return res.json(comments);
+  }
+  res.status(404).send(`Post ${id} not found.`);
+});
+
 // New comment
 commentRouter.post("/", async (req, res) => {
   const { postId, content } = req.body;
