@@ -6,10 +6,40 @@ const likeRouter = express.Router();
 // Get likes by postid
 likeRouter.get("/:id", async (req, res) => {
   const { id } = req.params;
+  let { page } = req.query;
 
-  const post = await Models.Post.findByPk(id);
+  if (!page) {
+    page = 0;
+  }
+
+  const post = await Models.Post.findByPk(id, {
+    include: [
+      {
+        model: Models.Like,
+        as: "likes",
+        limit: 20,
+        offset: page * 20,
+        attributes: ["id", "createdAt"],
+        include: {
+          model: Models.User,
+          as: "user",
+          attributes: ["id", "username"],
+        },
+      },
+    ],
+  });
+
   if (post) {
-    return res.json(post.likes);
+    const countLikes = await Models.Like.count({ where: { postId: id } });
+
+    let likes = {
+      per_page: 20,
+      page: page,
+      total_pages: Math.ceil(countLikes / 20),
+      data: post.likes,
+    };
+
+    return res.json(likes);
   }
   res.status(404).send(`Post ${id} not found.`);
 });

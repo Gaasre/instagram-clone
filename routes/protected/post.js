@@ -1,7 +1,6 @@
 import { Models } from "../../models";
 import express from "express";
 import uploadFile from "../../middlewares/upload";
-import { Model } from "mongoose";
 
 const postRouter = express.Router();
 
@@ -11,6 +10,9 @@ postRouter.get("/", async (req, res) => {
   if (user) {
     const userFound = await Models.User.findOne({
       include: { all: true, nested: true },
+      attributes: {
+        exclude: ["password"],
+      },
       where: {
         username: user,
       },
